@@ -2,9 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WAO! - 和国物品アプリ</title>
-    <!-- 洗練された印象を与えるモダンフォントの導入 -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Noto+Sans+JP:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -17,7 +16,7 @@
             --text-main: #1e293b;       /* 視認性の高いダークスレート */
             --text-muted: #64748b;      /* 落ち着いたニュアンスグレー */
             --border-light: #e2e8f0;    /* 繊細な境界線カラー */
-            --transition: all 0.2s ease;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
@@ -26,6 +25,8 @@
             color: var(--text-main);
             margin: 0;
             padding: 16px 16px 100px 16px;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* ⏳ 同期ローディング画面 */
@@ -54,9 +55,24 @@
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
             margin-bottom: 16px;
         }
-        .logo { font-size: 1.4em; font-weight: 800; color: var(--brand-primary); letter-spacing: -0.5px; }
-        .logo span { font-size: 0.55em; color: var(--text-muted); font-weight: 500; margin-left: 6px; letter-spacing: 0; }
+        .logo-area {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .logo { 
+            font-size: 1.4em; font-weight: 800; color: var(--brand-primary); letter-spacing: -0.5px; 
+            display: flex; align-items: center;
+        }
+        .logo span { font-size: 0.55em; color: var(--text-muted); font-weight: 500; margin-left: 4px; letter-spacing: 0; }
         .sync-badge { font-size: 0.75em; font-weight: 700; color: var(--brand-primary); background: rgba(0,102,204,0.08); padding: 5px 12px; border-radius: 20px; }
+
+        /* ❓ 質問ボタン */
+        .btn-question {
+            background: rgba(124, 58, 237, 0.1); color: var(--brand-purple);
+            border: 1px solid rgba(124, 58, 237, 0.2); border-radius: 12px;
+            padding: 6px 12px; font-size: 0.8em; font-weight: 700; cursor: pointer;
+            transition: var(--transition); display: flex; align-items: center; gap: 4px;
+        }
+        .btn-question:active { transform: scale(0.95); background: rgba(124, 58, 237, 0.2); }
 
         /* 🎛️ コントロールパネル */
         .panel {
@@ -68,19 +84,21 @@
 
         /* セレクター（入力欄）のデザイン */
         .grid-select { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-        select, input {
+        select, input, textarea {
             width: 100%; padding: 14px; background: #f8fafc; border: 1px solid var(--border-light);
             border-radius: 12px; color: var(--text-main); font-size: 0.95em; font-family: inherit;
             font-weight: 700; box-sizing: border-box; transition: var(--transition);
         }
-        select:focus, input:focus {
+        select { -webkit-appearance: none; appearance: none; }
+        select:focus, input:focus, textarea:focus {
             border-color: var(--brand-primary); outline: none; background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(0,102,204,0.1);
         }
 
-        /* 👥 区分セグメントボタン（タップ領域を強固に修正） */
+        /* 👥 区分カスタムセグメントボタン */
         .group-toggles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
         .toggle-btn {
-            padding: 14px 2px; font-size: 0.85em; text-align: center; background: #f8fafc;
+            padding: 12px 2px; font-size: 0.85em; text-align: center; background: #f8fafc;
             border: 1px solid var(--border-light); border-radius: 10px; cursor: pointer; color: var(--text-muted);
             font-weight: 700; transition: var(--transition);
         }
@@ -90,31 +108,33 @@
         }
 
         /* 📦 物品選択カード */
-        .item-grid { display: flex; flex-direction: column; gap: 12px; }
+        .item-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .item-card {
             background: #f8fafc; border: 1px solid var(--border-light);
-            border-radius: 16px; padding: 16px; transition: var(--transition);
-            display: flex; justify-content: space-between; align-items: center;
+            border-radius: 14px; padding: 12px; transition: var(--transition);
+            display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
         }
         .item-card.selected {
             border-color: var(--theme-color, var(--brand-primary));
             background: #ffffff;
+            box-shadow: 0 6px 20px var(--theme-glow, rgba(0,102,204,0.06));
         }
         .item-info { flex: 1; }
-        .item-name { font-size: 1.05em; font-weight: 700; margin: 0 0 4px 0; color: var(--text-main); }
-        .item-stock { font-size: 0.8em; color: var(--text-muted); font-weight: 500; margin: 0; }
-        .user-loan-badge { display: inline-block; font-size: 0.75em; font-weight: 700; color: var(--brand-danger); margin-top: 6px; }
+        .item-name { font-size: 0.95em; font-weight: 700; margin: 0 0 2px 0; color: var(--text-main); line-height: 1.3; }
+        .item-stock { font-size: 0.75em; color: var(--text-muted); font-weight: 500; margin: 0; }
+        .item-limit-badge { font-size: 0.7em; color: var(--brand-purple); font-weight: 700; margin: 0; }
+        .user-loan-badge { display: inline-block; font-size: 0.7em; font-weight: 700; color: var(--brand-danger); margin-top: 4px; }
 
-        /* カウンターUI（タップしやすくサイズと押しやすさを改善） */
-        .counter-group { display: flex; align-items: center; gap: 16px; }
+        /* カウンターUI */
+        .counter-group { display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 4px; border-radius: 20px; }
         .counter-btn {
-            width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-light);
-            background: #ffffff; color: var(--text-main); font-size: 1.4em; font-weight: bold; cursor: pointer;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: #ffffff; color: var(--text-main); font-size: 1.1em; font-weight: bold; cursor: pointer;
             display: flex; align-items: center; justify-content: center; transition: var(--transition);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .counter-btn:active { transform: scale(0.9); background: #f1f5f9; }
-        .count-display { font-size: 1.3em; font-weight: 800; min-width: 28px; text-align: center; }
+        .counter-btn:active { transform: scale(0.9); background: #e2e8f0; }
+        .count-display { font-size: 1.1em; font-weight: 800; min-width: 24px; text-align: center; }
 
         /* 🚀 メインアクションボタン */
         .action-container { margin-top: 24px; }
@@ -125,17 +145,21 @@
             letter-spacing: 1px; transition: var(--transition);
         }
         .btn-main:active { transform: scale(0.98); opacity: 0.95; }
+        .btn-main:disabled { background: var(--text-muted) !important; box-shadow: none !important; cursor: not-allowed; opacity: 0.6; }
 
         /* 📊 在庫リスト表示項目 */
-        .status-row {
-            padding: 16px; border-radius: 14px; background: #f8fafc; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid var(--border-light); border-left: 5px solid var(--brand-success);
+        .db-card {
+            background: #f8fafc; border: 1px solid var(--border-light); border-radius: 14px; padding: 12px;
+            display: flex; flex-direction: column; justify-content: space-between; gap: 8px; border-left: 5px solid var(--brand-success);
         }
-        .status-row.out { border-left-color: var(--brand-danger); }
-        .badge { padding: 5px 12px; border-radius: 8px; font-size: 0.8em; font-weight: 700; }
+        .db-card.out { border-left-color: var(--brand-danger); }
+
+        /* 📢 管理者設定お知らせバー */
+        .info-notice { background: rgba(0, 102, 204, 0.06); border: 1px solid rgba(0, 102, 204, 0.15); color: var(--brand-primary); padding: 12px; border-radius: 12px; font-size: 0.85em; font-weight: 700; margin-bottom: 14px; text-align: left; display: none; line-height: 1.4; }
+
+        .badge { padding: 5px 12px; border-radius: 8px; font-size: 0.8em; font-weight: 700; display: inline-block; text-align: center; }
         .badge.in { background: rgba(16,185,129,0.1); color: var(--brand-success); }
-        .badge.out { background: rgba(239,68,110,0.1); color: var(--brand-danger); }
+        .badge.out { background: rgba(239,68,68,0.1); color: var(--brand-danger); }
 
         /* 📋 クラス・団体別の未返却状況カード */
         .class-card {
@@ -143,27 +167,42 @@
             border: 1px solid var(--border-light); border-left: 5px solid var(--brand-purple);
         }
 
-        /* 🗺️ ボトムナビゲーション（高さを少し出し、確実に押せるように調整） */
+        /* 🛠️ 設定・管理系スタイル */
+        .admin-section { display: flex; flex-direction: column; gap: 16px; }
+        .setting-row { border-bottom: 1px solid var(--border-light); padding-bottom: 14px; margin-bottom: 14px; }
+        .setting-label { font-size: 0.85em; font-weight: 700; margin-bottom: 6px; color: var(--text-main); display: flex; align-items: center; gap: 4px; }
+        .tag-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .item-tag { background: #e2e8f0; padding: 4px 10px; border-radius: 8px; font-size: 0.8em; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .item-tag .remove { color: var(--brand-danger); cursor: pointer; }
+        .ban-notice { background: rgba(239,68,68,0.08); border: 1px dashed var(--brand-danger); color: var(--brand-danger); padding: 12px; border-radius: 12px; font-size: 0.85em; font-weight: 700; margin-bottom: 14px; text-align: center; display: none; }
+
+        /* 📋 質問ログ管理用カード */
+        .q-log-card { background: #f8fafc; border: 1px solid var(--border-light); border-radius: 12px; padding: 12px; margin-bottom: 8px; font-size: 0.85em; position: relative; }
+        .q-log-delete { position: absolute; top: 10px; right: 12px; color: var(--brand-danger); font-weight: bold; cursor: pointer; }
+
+        /* 🗺️ ボトムナビゲーション */
         .nav-dock {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 76px;
-            background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px);
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 72px;
+            background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px);
             border-top: 1px solid var(--border-light); display: flex; z-index: 5000;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
         }
         .nav-tab {
             flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--text-muted); cursor: pointer; transition: var(--transition); font-size: 0.75em; font-weight: 700; gap: 4px;
+            color: var(--text-muted); cursor: pointer; transition: var(--transition); font-size: 0.7em; font-weight: 700; gap: 4px;
         }
-        .nav-tab span { font-size: 1.4em; }
+        .nav-tab span { font-size: 1.3em; transition: var(--transition); }
         .nav-tab.active { color: var(--active-color, var(--brand-primary)); }
+        .nav-tab.active span { transform: translateY(-2px); }
 
-        /* 📋 最終確認モーダルダイアログ */
+        /* 📋 モーダルダイアログ共通 */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(6px); z-index: 9000;
+            overflow-y: auto;
         }
         .modal-body {
-            background: var(--bg-card); width: 90%; max-width: 400px; margin: 60px auto;
+            background: var(--bg-card); width: 90%; max-width: 400px; margin: 40px auto;
             border-radius: 24px; padding: 24px; border: 1px solid var(--border-light);
             box-sizing: border-box; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
         }
@@ -172,23 +211,26 @@
 </head>
 <body>
 
-    <!-- 同期中ローディング画面 -->
     <div id="loader" class="loader-overlay">
         <div class="cyber-spinner"></div>
         <div id="loader-text" class="loader-text">データを同期中...</div>
     </div>
 
-    <!-- ヘッダー -->
     <div class="app-header">
-        <div class="logo">WAO!<span>和国物品アプリ</span></div>
+        <div class="logo-area">
+            <div class="logo">WAO!<span>和国物品アプリ</span></div>
+            <button class="btn-question" onclick="openQuestionModal()">❓ 質問する</button>
+        </div>
         <div id="sync-status" class="sync-badge">接続中</div>
     </div>
 
-    <!-- モードセクション：手続き画面（貸出/返却） -->
+    <div id="info-notice-bar" class="info-notice"></div>
+
+    <div id="ban-notice-bar" class="ban-notice">🔒 選択されたクラスは現在、物品の貸出が制限されています。</div>
+
     <div id="sec-action" class="panel">
         <div id="panel-action-title" class="panel-title">現在のモード: 物品の貸出申請</div>
         
-        <!-- 所属選択タブ -->
         <div class="group-toggles">
             <div id="g-class" class="toggle-btn active" onclick="changeGroup('class')">クラス</div>
             <div id="g-vun" class="toggle-btn" onclick="changeGroup('vun')">文実</div>
@@ -196,7 +238,6 @@
             <div id="g-club" class="toggle-btn" onclick="changeGroup('club')">部活</div>
         </div>
 
-        <!-- 選択用コンボボックス群 -->
         <div id="group-selectors">
             <div id="box-vun" style="display:none; margin-bottom:12px;"><select id="sel-vun"></select></div>
             <div id="box-comm" style="display:none; margin-bottom:12px;"><select id="sel-comm"></select></div>
@@ -211,38 +252,122 @@
             </select>
         </div>
 
-        <!-- 物品選択リスト -->
         <div class="panel-title" style="margin-top:24px;">物品を選択</div>
         <div id="action-item-list" class="item-grid"></div>
 
-        <!-- 手続き実行エリア -->
         <div class="action-container">
             <button id="btn-trigger" class="btn-main" onclick="openConfirmation()">選択した内容を確認する</button>
         </div>
     </div>
 
-    <!-- モードセクション：リアルタイム在庫 -->
     <div id="sec-dashboard" class="panel" style="display:none;">
         <div class="panel-title">リアルタイム在庫状況</div>
         <input type="text" id="db-search" placeholder="物品名で検索..." oninput="drawDashboard()" style="margin-bottom:16px;">
-        <div id="db-list"></div>
+        <div id="db-list" class="item-grid"></div>
     </div>
 
-    <!-- モードセクション：団体の未返却ログ -->
     <div id="sec-status" class="panel" style="display:none;">
         <div class="panel-title" id="class-status-header">未返却物品一覧</div>
         <div id="class-status-list"></div>
     </div>
 
-    <!-- スマート下部ナビゲーション -->
+    <div id="sec-admin" class="panel" style="display:none;">
+        <div class="panel-title">⚙️ システム環境設定</div>
+        
+        <div id="admin-auth-box" style="text-align:center; padding: 20px 0;">
+            <p style="font-size:0.9em; color:var(--text-muted); margin-bottom:12px;">管理者用パスワードを入力してください</p>
+            <input type="password" id="admin-pass" placeholder="Password..." style="text-align:center; max-width:240px; margin-bottom:14px;"><br>
+            <button class="btn-main" onclick="unlockAdminPanel()" style="max-width:180px; padding:10px 16px; font-size:0.9em; background:var(--brand-purple); box-shadow:none;">認証する</button>
+        </div>
+
+        <div id="admin-content" class="admin-section" style="display:none;">
+            <div class="setting-row">
+                <div class="setting-label">📢 アプリ内お知らせメッセージの設定</div>
+                <textarea id="admin-info-input" rows="2" placeholder="全体に通知するアナウンスを入力（空欄で非表示）" style="padding:10px; font-size:0.9em; font-weight:500; resize:none; margin-bottom:8px;"></textarea>
+                <button class="btn-main" onclick="saveInfoNotice()" style="padding:10px; background:var(--brand-purple); box-shadow:none; font-size:0.85em; border-radius:10px;">お知らせを更新</button>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-label">👥 委員会・部活の新規追加</div>
+                <div class="grid-select" style="grid-template-columns: 2fr 3fr 1fr; gap:6px; margin-bottom:0;">
+                    <select id="add-group-type" style="padding:10px;"><option value="comm">委員会</option><option value="club">部活</option></select>
+                    <input type="text" id="add-group-name" placeholder="団体名を入力" style="padding:10px;">
+                    <button class="btn-main" onclick="addNewGroup()" style="padding:0; background:var(--brand-purple); box-shadow:none; border-radius:12px; font-size:1.2em;">+</button>
+                </div>
+                <div id="admin-comm-tags" class="tag-container"></div>
+                <div id="admin-club-tags" class="tag-container"></div>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-label">個数制限を設ける</div>
+                <div id="admin-limit-list" style="display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto; padding-right:4px;"></div>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-label">🛑 物品の貸出禁止クラス</div>
+                <div class="grid-select" style="grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:0;">
+                    <select id="ban-grade" style="padding:10px;"><option>1年</option><option>2年</option><option>3年</option></select>
+                    <select id="ban-hr" style="padding:10px;"></select>
+                    <button class="btn-main" onclick="addBanClass()" style="padding:0; background:var(--brand-danger); box-shadow:none; border-radius:12px; font-size:0.85em;">禁止に追加</button>
+                </div>
+                <div id="admin-ban-tags" class="tag-container"></div>
+            </div>
+
+            <div class="setting-row" style="border:none; margin:0; padding:0;">
+                <div class="setting-label">❓ 受信した質問の一覧</div>
+                <div id="admin-q-list" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-top:4px;"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="nav-dock">
         <div id="tab-loan" class="nav-tab active" onclick="switchView('loan')"><span>📥</span>借りる</div>
         <div id="tab-return" class="nav-tab" onclick="switchView('return')"><span>📤</span>返却する</div>
         <div id="tab-dash" class="nav-tab" onclick="switchView('dashboard')"><span>📊</span>在庫を見る</div>
         <div id="tab-status" class="nav-tab" onclick="switchView('status')"><span>📋</span>未返却ログ</div>
+        <div id="tab-admin" class="nav-tab" onclick="switchView('admin')"><span>⚙️</span>設定</div>
     </div>
 
-    <!-- 確認用モーダル -->
+    <div id="question-modal" class="modal">
+        <div class="modal-body" style="max-width:440px;">
+            <div class="modal-header" style="color:var(--brand-purple);">❓ システム・物品に関する質問フォーム</div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <div>
+                    <span style="font-size:0.8em; font-weight:700; color:var(--text-muted);">団体名</span>
+                    <input type="text" id="q-group" placeholder="例: クラス、〇〇部、文実本部など">
+                </div>
+                <div class="grid-select" style="margin-bottom:0;">
+                    <div>
+                        <span style="font-size:0.8em; font-weight:700; color:var(--text-muted);">学年</span>
+                        <select id="q-grade"><option>1年</option><option>2年</option><option>3年</option><option>その他</option></select>
+                    </div>
+                    <div>
+                        <span style="font-size:0.8em; font-weight:700; color:var(--text-muted);">クラス</span>
+                        <input type="text" id="q-hr" placeholder="例: 3組">
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size:0.8em; font-weight:700; color:var(--text-muted);">メールアドレス</span>
+                    <input type="email" id="q-email" placeholder="example@example.com">
+                </div>
+                <div>
+                    <span style="font-size:0.8em; font-weight:700; color:var(--text-muted);">質問の区分</span>
+                    <select id="q-type">
+                        <option value="クラスとしての質問">クラスとしての質問</option>
+                        <option value="委員会としての質問">委員会としての質問</option>
+                        <option value="部活としての質問">部活としての質問</option>
+                    </select>
+                </div>
+                <div>
+                    <span style="font-size:0.8em; font-weight:700; color:var(--text-muted);">質問の内容</span>
+                    <textarea id="q-content" rows="4" placeholder="質問内容を詳しく記入してください" style="resize:none; font-weight:500;"></textarea>
+                </div>
+            </div>
+            <button class="btn-main" onclick="submitQuestion()" style="background:var(--brand-purple); box-shadow:0 6px 16px rgba(124,58,237,0.3); margin-top:20px;">質問を送信する</button>
+            <button onclick="document.getElementById('question-modal').style.display='none'" style="width:100%; background:none; border:none; color:var(--brand-danger); margin-top:14px; cursor:pointer; font-weight:700; font-size:0.95em;">閉じる</button>
+        </div>
+    </div>
+
     <div id="confirm-modal" class="modal">
         <div class="modal-body">
             <div id="modal-indicator" class="modal-header" style="color:var(--brand-primary);">申請内容の最終確認</div>
@@ -258,13 +383,21 @@
     </div>
 
     <script>
-        // 🛠️ ここに作成したGASのデプロイURLを入力してください
+        // 🛠️ GASのデプロイURLをここに貼り付けてください
         const API_URL = "https://script.google.com/macros/s/AKfycbzDwFwBuyUmmA9pvUA4bXwKRwwaNxZ1SVpsbF1chyw9WFI1CCXr8dzKErOKh7io7sWOlA/exec";
 
-        const GROUPS = {
+        // マスタ基礎構造（クラウド同期されるためデフォルト値として使用）
+        let GROUPS = {
             vun: ["OP･ED", "体育館ステージ", "装飾", "門制作", "野外ステージ", "後夜祭", "バンド", "本部"],
             comm: ["図書委員会", "国際理解委員会", "放送委員会", "生活委員会"],
             club: ["吹奏楽部", "美術部", "茶道部", "演劇部", "写真部", "情報技術研究部", "ハンドメイド部"]
+        };
+
+        let adminSettings = {
+            itemLimits: {},
+            banClasses: [],
+            infoNotice: "",
+            questions: []
         };
 
         let appState = {
@@ -275,53 +408,173 @@
             cachedAllLoans: {}
         };
 
+        // 初期化処理
         function initApp() {
+            renderSelectMenus();
+            
+            const banHr = document.getElementById('ban-hr');
+            for(let i=1; i<=8; i++) banHr.innerHTML += `<option>${i}組</option>`;
+
+            switchView('loan');
+            syncSystemData();
+            setInterval(syncSystemData, 15000); // 15秒ごとにクラウド完全同期
+        }
+
+        // セレクトメニューのレンダリング
+        function renderSelectMenus() {
             const fill = (id, arr) => {
                 document.getElementById(id).innerHTML = '<option value="">所属・係を選択</option>' + arr.map(v => `<option value="${v}">${v}</option>`).join('');
             };
             fill('sel-vun', GROUPS.vun); fill('sel-comm', GROUPS.comm); fill('sel-club', GROUPS.club);
             
             const hr = document.getElementById('sel-hr');
-            for(let i=1; i<=8; i++) hr.innerHTML += `<option>${i}組</option>`;
+            if(hr.innerHTML === "") {
+                for(let i=1; i<=8; i++) hr.innerHTML += `<option>${i}組</option>`;
+            }
             
             const no = document.getElementById('sel-no');
-            for(let i=1; i<=40; i++) no.innerHTML += `<option value="${i}">${i}番</option>`;
-
-            switchView('loan');
-            syncSystemData();
-            setInterval(syncSystemData, 20000);
+            if(no.innerHTML.trim() === '<option value="">出席番号を選択してください</option>' || no.children.length <= 1) {
+                no.innerHTML = '<option value="">出席番号を選択してください</option>';
+                for(let i=1; i<=40; i++) no.innerHTML += `<option value="${i}">${i}番</option>`;
+            }
         }
 
+        // お知らせ表示の反映
+        function renderInfoNotice() {
+            const bar = document.getElementById('info-notice-bar');
+            if(adminSettings.infoNotice && adminSettings.infoNotice.trim() !== "") {
+                bar.innerText = "📢 お知らせ: " + adminSettings.infoNotice;
+                bar.style.display = 'block';
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        // ❓ 質問モーダルオープン
+        function openQuestionModal() {
+            document.getElementById('question-modal').style.display = 'block';
+        }
+
+        // 🔄 クラウド（GAS）との完全同期
         async function syncSystemData() {
             document.getElementById('sync-status').innerText = "同期中...";
             try {
+                // 1. 物品マスター
                 const resItems = await fetch(`${API_URL}?action=getItems`);
                 appState.masterItems = await resItems.json();
 
+                // 2. 現在の未返却状況一覧
                 const resAllLoans = await fetch(`${API_URL}?action=getAllLoans`);
                 appState.cachedAllLoans = await resAllLoans.json();
 
+                // 3. 全端末共通のクラウド設定データの取得
+                const resAdmin = await fetch(`${API_URL}?action=getAdminSettings`);
+                const cloudConfig = await resAdmin.json();
+                
+                adminSettings.itemLimits = cloudConfig.itemLimits || {};
+                adminSettings.banClasses = cloudConfig.banClasses || [];
+                adminSettings.infoNotice = cloudConfig.infoNotice || "";
+                adminSettings.questions = cloudConfig.questions || [];
+                if(cloudConfig.customGroups) {
+                    GROUPS.comm = cloudConfig.customGroups.comm || GROUPS.comm;
+                    GROUPS.club = cloudConfig.customGroups.club || GROUPS.club;
+                }
+
                 document.getElementById('sync-status').innerText = "接続中";
                 
+                renderSelectMenus();
+                renderInfoNotice();
+
                 if(appState.mode === 'dashboard') drawDashboard();
                 else if(appState.mode === 'status') drawClassStatus();
                 else drawActionItems();
+
+                checkClassBanStatus();
+                if(appState.mode === 'admin') renderAdminControlElements();
             } catch(e) {
                 document.getElementById('sync-status').innerText = "オフライン";
             }
         }
 
+        // ⚙️ クラウド共有設定をGAS経由でスプレッドシートに保存
+        async function pushAdminSettingsToCloud() {
+            const payload = {
+                action: "saveAdminSettings",
+                settings: {
+                    itemLimits: adminSettings.itemLimits,
+                    banClasses: adminSettings.banClasses,
+                    infoNotice: adminSettings.infoNotice,
+                    questions: adminSettings.questions,
+                    customGroups: { comm: GROUPS.comm, club: GROUPS.club }
+                }
+            };
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+            } catch(e) {
+                alert("クラウドとの同期に失敗しました。ネットワークを確認してください。");
+            }
+        }
+
+        // ❓ 質問処理コミット
+        async function submitQuestion() {
+            const group = document.getElementById('q-group').value.trim();
+            const grade = document.getElementById('q-grade').value;
+            const hr = document.getElementById('q-hr').value.trim();
+            const email = document.getElementById('q-email').value.trim();
+            const type = document.getElementById('q-type').value;
+            const content = document.getElementById('q-content').value.trim();
+
+            if(!group || !hr || !email || !content) {
+                alert("全ての項目を入力してください。");
+                return;
+            }
+
+            const qObj = {
+                id: Date.now(),
+                date: new Date().toLocaleString('ja-JP'),
+                group: group,
+                grade: grade,
+                hr: hr,
+                email: email,
+                type: type,
+                content: content
+            };
+
+            document.getElementById('loader-text').innerText = "質問を送信中...";
+            document.getElementById('loader').style.display = 'flex';
+
+            adminSettings.questions.push(qObj);
+            await pushAdminSettingsToCloud();
+            
+            document.getElementById('loader').style.display = 'none';
+            alert("質問を送信しました。管理者に共有されます。");
+            document.getElementById('question-modal').style.display = 'none';
+            
+            document.getElementById('q-group').value = '';
+            document.getElementById('q-hr').value = '';
+            document.getElementById('q-email').value = '';
+            document.getElementById('q-content').value = '';
+            syncSystemData();
+        }
+
+        // 表示モード切り替え
         function switchView(targetMode) {
             appState.mode = targetMode;
             
-            const tabs = { loan: 'tab-loan', return: 'tab-return', dashboard: 'tab-dash', status: 'tab-status' };
+            const tabs = { loan: 'tab-loan', return: 'tab-return', dashboard: 'tab-dash', status: 'tab-status', admin: 'tab-admin' };
             Object.keys(tabs).forEach(k => document.getElementById(tabs[k]).classList.remove('active'));
             
             document.getElementById('sec-action').style.display = (targetMode === 'loan' || targetMode === 'return') ? 'block' : 'none';
             document.getElementById('sec-dashboard').style.display = (targetMode === 'dashboard') ? 'block' : 'none';
             document.getElementById('sec-status').style.display = (targetMode === 'status') ? 'block' : 'none';
+            document.getElementById('sec-admin').style.display = (targetMode === 'admin') ? 'block' : 'none';
 
             const activeTab = document.getElementById(tabs[targetMode]);
+            activeTab.classList.add('active');
+
             if(targetMode === 'loan') {
                 activeTab.style.setProperty('--active-color', 'var(--brand-primary)');
                 document.getElementById('panel-action-title').innerText = "現在のモード: 物品の貸出申請";
@@ -336,9 +589,15 @@
             } else if(targetMode === 'status') {
                 activeTab.style.setProperty('--active-color', 'var(--brand-purple)');
                 drawClassStatus();
+            } else if(targetMode === 'admin') {
+                activeTab.style.setProperty('--active-color', 'var(--brand-purple)');
+                renderAdminControlElements();
             }
 
-            if(targetMode === 'loan' || targetMode === 'return') drawActionItems();
+            if(targetMode === 'loan' || targetMode === 'return') {
+                drawActionItems();
+                checkClassBanStatus();
+            }
         }
 
         function changeGroup(g) {
@@ -354,7 +613,24 @@
 
         function onUserChange() {
             fetchUserCurrentLoans();
+            checkClassBanStatus();
             if(appState.mode === 'status') drawClassStatus();
+        }
+
+        function checkClassBanStatus() {
+            const g = document.getElementById('sel-grade').value;
+            const h = document.getElementById('sel-hr').value;
+            const currentClass = `${g}${h}`;
+            const noticeBar = document.getElementById('ban-notice-bar');
+            const submitBtn = document.getElementById('btn-trigger');
+
+            if(appState.mode === 'loan' && adminSettings.banClasses.includes(currentClass)) {
+                noticeBar.style.display = 'block';
+                submitBtn.disabled = true;
+            } else {
+                noticeBar.style.display = 'none';
+                submitBtn.disabled = false;
+            }
         }
 
         function getUserPrefix() {
@@ -385,24 +661,29 @@
         function drawActionItems() {
             const container = document.getElementById('action-item-list');
             if(appState.masterItems.length === 0) {
-                container.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:10px;">データを読み込んでいます...</div>`;
+                container.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:10px; grid-column:span 2;">データを読み込んでいます...</div>`;
                 return;
             }
 
             const color = appState.mode === 'loan' ? 'var(--brand-primary)' : 'var(--brand-success)';
-            let renderedCount = 0;
+            const glow = appState.mode === 'loan' ? 'rgba(0,102,204,0.06)' : 'rgba(16,185,129,0.06)';
 
+            let renderedCount = 0;
             container.innerHTML = appState.masterItems.map((item, index) => {
                 const holdingQty = appState.activeUserLoans[item.name] || 0;
                 if(appState.mode === 'return' && holdingQty <= 0) return ''; 
                 renderedCount++;
 
+                const limit = adminSettings.itemLimits[item.name] || null;
+                const limitText = limit ? `上限: ${limit}個` : '制限なし';
+
                 return `
-                    <div class="item-card" id="card-${index}" style="--theme-color:${color}">
+                    <div class="item-card" id="card-${index}" style="--theme-color:${color}; --theme-glow:${glow}">
                         <div class="item-info">
                             <p class="item-name">${item.name}</p>
-                            <p class="item-stock">現在の貸出可能数: ${item.stock}</p>
-                            ${holdingQty > 0 ? `<span class="user-loan-badge">現在借りている数量: ${holdingQty}</span>` : ''}
+                            <p class="item-stock">可能数: ${item.stock}</p>
+                            ${appState.mode === 'loan' ? `<p class="item-limit-badge">${limitText}</p>` : ''}
+                            ${holdingQty > 0 ? `<span class="user-loan-badge">借用中: ${holdingQty}</span>` : ''}
                         </div>
                         <div class="counter-group">
                             <button class="counter-btn" onclick="stepCount(${index}, -1)">-</button>
@@ -414,14 +695,19 @@
             }).join('');
 
             if(appState.mode === 'return' && renderedCount === 0) {
-                container.innerHTML = `<div style="color:var(--brand-success); text-align:center; padding:20px; font-weight:bold;">🎉 このアカウントが現在借りている物品はありません</div>`;
+                container.innerHTML = `<div style="color:var(--brand-success); text-align:center; padding:20px; font-weight:bold; grid-column:span 2;">🎉 このアカウントが現在借りている物品はありません</div>`;
             }
         }
 
         function stepCount(idx, delta) {
             const el = document.getElementById(`qty-${idx}`);
             let current = parseInt(el.innerText) + delta;
-            const max = appState.mode === 'loan' ? appState.masterItems[idx].stock : (appState.activeUserLoans[appState.masterItems[idx].name] || 0);
+            let max = appState.mode === 'loan' ? appState.masterItems[idx].stock : (appState.activeUserLoans[appState.masterItems[idx].name] || 0);
+
+            if(appState.mode === 'loan') {
+                const limitMax = adminSettings.itemLimits[appState.masterItems[idx].name];
+                if(limitMax && limitMax < max) max = limitMax;
+            }
 
             if(current < 0 || current > max) return;
             el.innerText = current;
@@ -434,19 +720,21 @@
         function drawDashboard() {
             const container = document.getElementById('db-list');
             const search = document.getElementById('db-search').value.toLowerCase().trim();
-            
             const filtered = appState.masterItems.filter(it => it.name.toLowerCase().includes(search));
+            
             if(filtered.length === 0) {
-                container.innerHTML = `<div style="color:var(--text-muted); padding:10px;">該当する物品が見つかりませんでした</div>`;
+                container.innerHTML = `<div style="color:var(--text-muted); padding:10px; grid-column:span 2;">該当する物品が見つかりませんでした</div>`;
                 return;
             }
 
             container.innerHTML = filtered.map(item => {
                 const isOut = item.stock <= 0;
                 return `
-                    <div class="status-row ${isOut ? 'out' : ''}">
-                        <span style="font-weight:700;">${item.name}</span>
-                        <span class="badge ${isOut ? 'out' : 'in'}">${isOut ? '在庫切れ' : `残り: ${item.stock}`}</span>
+                    <div class="db-card ${isOut ? 'out' : ''}">
+                        <div style="font-size:0.9em; font-weight:700; color:var(--text-main); line-height:1.3; word-break:break-all;">${item.name}</div>
+                        <div>
+                            <span class="badge ${isOut ? 'out' : 'in'}" style="width:100%; box-sizing:border-box;">${isOut ? '在庫切れ' : `残り: ${item.stock}`}</span>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -480,11 +768,125 @@
             container.innerHTML = Object.keys(aggregate).map(name => `
                 <div class="class-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:bold; color:var(--text-main);">📌 ${name}</span>
-                        <span style="color:var(--brand-danger); font-weight:bold; font-size:1.1em;">合計 ${aggregate[name]} 個</span>
+                        <span style="font-weight:bold; color:var(--text-main);">🏢 <strong>${prefix}</strong> は <strong>${name}</strong> を借りています</span>
+                        <span style="color:var(--brand-danger); font-weight:bold; font-size:1.1em;">(${aggregate[name]} 個)</span>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function unlockAdminPanel() {
+            const pass = document.getElementById('admin-pass').value;
+            if(pass === 'midunoki') {
+                document.getElementById('admin-auth-box').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'flex';
+                renderAdminControlElements();
+            } else {
+                alert('パスワードが違います');
+            }
+        }
+
+        async function saveInfoNotice() {
+            const txt = document.getElementById('admin-info-input').value;
+            adminSettings.infoNotice = txt;
+            await pushAdminSettingsToCloud();
+            renderInfoNotice();
+            alert("全体のお知らせを更新しました（全端末同期）");
+        }
+
+        async function deleteQuestion(qId) {
+            if(!confirm("この質問を削除してもよろしいですか？")) return;
+            adminSettings.questions = adminSettings.questions.filter(q => q.id !== qId);
+            await pushAdminSettingsToCloud();
+            renderAdminControlElements();
+        }
+
+        function renderAdminControlElements() {
+            if(document.getElementById('admin-content').style.display === 'none') return;
+
+            document.getElementById('admin-info-input').value = adminSettings.infoNotice || "";
+
+            const commBox = document.getElementById('admin-comm-tags');
+            commBox.innerHTML = GROUPS.comm.map((c, i) => `<span class="item-tag">${c}<span class="remove" onclick="removeGroup('comm', ${i})">×</span></span>`).join('');
+            
+            const clubBox = document.getElementById('admin-club-tags');
+            clubBox.innerHTML = GROUPS.club.map((c, i) => `<span class="item-tag">${c}<span class="remove" onclick="removeGroup('club', ${i})">×</span></span>`).join('');
+
+            const banBox = document.getElementById('admin-ban-tags');
+            banBox.innerHTML = adminSettings.banClasses.map((cl, i) => `<span class="item-tag" style="background:#fee2e2; color:var(--brand-danger); border:1px solid #fca5a5;">${cl}<span class="remove" onclick="removeBanClass(${i})">×</span></span>`).join('');
+
+            const limitList = document.getElementById('admin-limit-list');
+            if(appState.masterItems.length === 0) {
+                limitList.innerHTML = `<span style="color:var(--text-muted); font-size:0.85em;">物品データを読み込み中...</span>`;
+            } else {
+                limitList.innerHTML = appState.masterItems.map(item => {
+                    const currentVal = adminSettings.itemLimits[item.name] || '';
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid var(--border-light);">
+                            <span style="font-size:0.85em; font-weight:700; color:var(--text-main); max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.name}</span>
+                            <input type="number" placeholder="制限なし" value="${currentVal}" onchange="saveItemLimit('${item.name}', this.value)" style="width:90px; padding:6px 10px; border-radius:8px; text-align:center;">
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const qList = document.getElementById('admin-q-list');
+            if(!adminSettings.questions || adminSettings.questions.length === 0) {
+                qList.innerHTML = `<span style="color:var(--text-muted); font-size:0.85em; padding:10px 0;">届いている質問はありません。</span>`;
+            } else {
+                qList.innerHTML = adminSettings.questions.map(q => `
+                    <div class="q-log-card">
+                        <span class="q-log-delete" onclick="deleteQuestion(${q.id})">削除</span>
+                        <div style="font-weight:700; color:var(--brand-purple); margin-bottom:4px;">[${q.type}] ${q.grade} ${q.hr} - ${q.group}</div>
+                        <div style="color:var(--text-muted); font-size:0.8em; margin-bottom:6px;">連絡先: ${q.email} (${q.date})</div>
+                        <div style="background:#ffffff; padding:10px; border-radius:8px; border:1px solid var(--border-light); font-weight:500; color:var(--text-main); white-space:pre-wrap; word-break:break-all;">${q.content}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function addNewGroup() {
+            const type = document.getElementById('add-group-type').value;
+            const name = document.getElementById('add-group-name').value.trim();
+            if(!name) return alert('団体名を入力してください');
+            if(GROUPS[type].includes(name)) return alert('既に登録されています');
+
+            GROUPS[type].push(name);
+            await pushAdminSettingsToCloud();
+            document.getElementById('add-group-name').value = '';
+            syncSystemData();
+        }
+
+        async function removeGroup(type, index) {
+            GROUPS[type].splice(index, 1);
+            await pushAdminSettingsToCloud();
+            syncSystemData();
+        }
+
+        async function saveItemLimit(itemName, val) {
+            if(val === '' || parseInt(val) <= 0) {
+                delete adminSettings.itemLimits[itemName];
+            } else {
+                adminSettings.itemLimits[itemName] = parseInt(val);
+            }
+            await pushAdminSettingsToCloud();
+        }
+
+        async function addBanClass() {
+            const g = document.getElementById('ban-grade').value;
+            const h = document.getElementById('ban-hr').value;
+            const target = `${g}${h}`;
+            if(adminSettings.banClasses.includes(target)) return alert('既に設定されています');
+            
+            adminSettings.banClasses.push(target);
+            await pushAdminSettingsToCloud();
+            syncSystemData();
+        }
+
+        async function removeBanClass(index) {
+            adminSettings.banClasses.splice(index, 1);
+            await pushAdminSettingsToCloud();
+            syncSystemData();
         }
 
         function openConfirmation() {
@@ -499,7 +901,6 @@
             if(selected.length === 0) return alert("数量を1つ以上選択してください");
 
             document.getElementById('conf-user').innerText = getFullUsername();
-            
             const indicator = document.getElementById('modal-indicator');
             if(appState.mode === 'loan') {
                 indicator.innerText = "申請：貸出手続きの確定";
@@ -526,14 +927,14 @@
             document.getElementById('loader').style.display = 'flex';
 
             try {
-                const response = await fetch(API_URL, {
+                await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify(appState.pendingData)
                 });
                 alert("手続きが正常に完了しました！");
                 location.reload();
             } catch(e) {
-                alert("通信エラー：送信に失敗しました。電波の良い所で再度お試しください。");
+                alert("通信エラー：送信に失敗しました。");
                 document.getElementById('loader').style.display = 'none';
             }
         }
